@@ -3,7 +3,7 @@ import streamlit as st
 # Example mapping of songs to audio URLs or local file paths
 song_dict = {
     "Shape of You - Ed Sheeran": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-    "Blinding Lights - The Weeknd": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    "Blinding Lights - The Weeknd": "https://www.youtube.com/watch?v=4NRXx6U8ABQ&ab_channel=TheWeekndVEVO",
     # Add more songs and their audio links here
 }
 
