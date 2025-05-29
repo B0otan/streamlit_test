@@ -1,9 +1,25 @@
 import streamlit as st
 import requests
 
-st.title('Currency Converter')
+st.title('Currency Converter & Song Picker')
 
-# Fetch available currency codes from the API
+# --- Song Selection ---
+songs = [
+    "Shape of You - Ed Sheeran",
+    "Blinding Lights - The Weeknd",
+    "Despacito - Luis Fonsi",
+    "Dance Monkey - Tones and I",
+    "Perfect - Ed Sheeran",
+    "Uptown Funk - Mark Ronson ft. Bruno Mars",
+    "Someone You Loved - Lewis Capaldi",
+    "Señorita - Shawn Mendes & Camila Cabello",
+    "Sunflower - Post Malone & Swae Lee",
+    "Rockstar - Post Malone ft. 21 Savage"
+]
+selected_song = st.selectbox("🎵 Select your song:", songs)
+st.write(f"**You selected:** {selected_song}")
+
+# --- Currency Conversion ---
 @st.cache_data
 def get_currency_codes():
     resp = requests.get('https://api.vatcomply.com/currencies')
@@ -14,7 +30,6 @@ def get_currency_codes():
 
 currency_codes = get_currency_codes()
 
-# User selects currencies and enters amount
 base_currency = st.selectbox('From currency:', currency_codes, index=currency_codes.index('MYR') if 'MYR' in currency_codes else 0)
 target_currency = st.selectbox('To currency:', currency_codes, index=currency_codes.index('USD') if 'USD' in currency_codes else 1)
 amount = st.number_input('Amount:', min_value=0.0, value=1.0)
