@@ -117,5 +117,28 @@ if left and not check_collision(board, piece, dx=-1):
 if right and not check_collision(board, piece, dx=1):
     piece["x"] += 1
 if rotate and not check_collision(board, piece, rotate=True):
-    piece["shape"] = np.rot90
-
+    piece["shape"] = np.rot90(piece["shape"])
+if down and not check_collision(board, piece, dy=1):
+    piece["y"] += 1
+if drop:
+    while not check_collision(board, piece, dy=1):
+        piece["y"] += 1
+
+# Try to move down naturally
+if not check_collision(board, piece, dy=1):
+    piece["y"] += 1
+else:
+    # Lock piece
+    st.session_state.board = merge(board, piece)
+    st.session_state.board, lines = clear_lines(st.session_state.board)
+    st.session_state.score += lines
+    new = new_piece()
+    if check_collision(st.session_state.board, new):
+        st.session_state.game_over = True
+    st.session_state.piece = new
+    st.experimental_rerun()
+
+# Draw board
+display_board = draw_board(st.session_state.board, st.session_state.piece)
+st.markdown(render(display_board), unsafe_allow_html=True)
+st.write("Score:", st.session_state.score)
