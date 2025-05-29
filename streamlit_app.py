@@ -3,21 +3,31 @@ import requests
 
 st.title('Currency Converter')
 
-# User input for amount and currency selection
-amount = st.number_input('Enter amount:', min_value=0.0, value=1.0)
-base_currency = st.text_input('From currency (e.g., MYR):', 'MYR')
-target_currency = st.text_input('To currency (e.g., USD):', 'USD')
+# Fetch available currency codes from the API
+@st.cache_data
+def get_currency_codes():
+    resp = requests.get('https://api.vatcomply.com/currencies')
+    if resp.status_code == 200:
+        return sorted(list(resp.json().keys()))
+    else:
+        return ['USD', 'EUR', 'MYR']
+
+currency_codes = get_currency_codes()
+
+# User selects currencies and enters amount
+base_currency = st.selectbox('From currency:', currency_codes, index=currency_codes.index('MYR') if 'MYR' in currency_codes else 0)
+target_currency = st.selectbox('To currency:', currency_codes, index=currency_codes.index('USD') if 'USD' in currency_codes else 1)
+amount = st.number_input('Amount:', min_value=0.0, value=1.0)
 
 if st.button('Convert'):
-    # Fetch exchange rates
-    response = requests.get(f'https://api.vatcomply.com/rates?base={base_currency.upper()}')
+    response = requests.get(f'https://api.vatcomply.com/rates?base={base_currency}')
     if response.status_code == 200:
         rates = response.json().get('rates', {})
-        if target_currency.upper() in rates:
-            rate = rates[target_currency.upper()]
+        if target_currency in rates:
+            rate = rates[target_currency]
             converted = amount * rate
-            st.write(f"{amount} {base_currency.upper()} = {converted:.2f} {target_currency.upper()}")
+            st.success(f"{amount} {base_currency} = {converted:.2f} {target_currency}")
         else:
-            st.error('Target currency not found in API response.')
+            st.error('Target currency not found.')
     else:
         st.error(f"API call failed with status code: {response.status_code}")
