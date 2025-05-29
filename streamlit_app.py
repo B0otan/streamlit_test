@@ -18,7 +18,7 @@ BOARD_HEIGHT = 20
 
 def new_piece():
     shape = random.choice(SHAPES)
-    return {"shape": shape, "x": BOARD_WIDTH // 2 - shape.shape[1] // 2, "y": 0}
+    return {"shape": shape.copy(), "x": BOARD_WIDTH // 2 - shape.shape[1] // 2, "y": 0}
 
 def check_collision(board, piece, dx=0, dy=0, rotate=False):
     shape = piece["shape"]
@@ -37,6 +37,7 @@ def check_collision(board, piece, dx=0, dy=0, rotate=False):
 
 def merge(board, piece):
     shape = piece["shape"]
+    board = board.copy()
     for y in range(shape.shape[0]):
         for x in range(shape.shape[1]):
             if shape[y, x]:
@@ -76,6 +77,7 @@ def render(board):
         html += "<br>"
     return html
 
+# Initialize session state
 if "board" not in st.session_state:
     st.session_state.board = np.zeros((BOARD_HEIGHT, BOARD_WIDTH), dtype=int)
 if "piece" not in st.session_state:
@@ -96,8 +98,10 @@ if st.session_state.game_over:
         st.session_state.score = 0
     st.stop()
 
-board = st.session_state.board
-piece = st.session_state.piece
+# Defensive copies for this run
+board = st.session_state.board.copy()
+piece = dict(st.session_state.piece)
+piece["shape"] = piece["shape"].copy()
 
 col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
@@ -111,24 +115,38 @@ with col4:
 with col5:
     drop = st.button("Drop")
 
-# Handle movement
+moved = False
+
 if left and not check_collision(board, piece, dx=-1):
     piece["x"] -= 1
+    moved = True
 if right and not check_collision(board, piece, dx=1):
     piece["x"] += 1
+    moved = True
 if rotate and not check_collision(board, piece, rotate=True):
     piece["shape"] = np.rot90(piece["shape"])
+    moved = True
 if down and not check_collision(board, piece, dy=1):
     piece["y"] += 1
+    moved = True
 if drop:
     while not check_collision(board, piece, dy=1):
         piece["y"] += 1
+    moved = True
 
-# Try to move down naturally
-if not check_collision(board, piece, dy=1):
-    piece["y"] += 1
-else:
-    # Lock piece
+# Lock if dropped or can't move down
+lock = False
+if drop:
+    lock = True
+elif not drop and not moved:
+    if not check_collision(board, piece, dy=1):
+        piece["y"] += 1
+        st.session_state.piece = piece
+        st.experimental_rerun()
+    else:
+        lock = True
+
+if lock:
     st.session_state.board = merge(board, piece)
     st.session_state.board, lines = clear_lines(st.session_state.board)
     st.session_state.score += lines
@@ -137,8 +155,9 @@ else:
         st.session_state.game_over = True
     st.session_state.piece = new
     st.experimental_rerun()
+else:
+    st.session_state.piece = piece
 
-# Draw board
 display_board = draw_board(st.session_state.board, st.session_state.piece)
 st.markdown(render(display_board), unsafe_allow_html=True)
 st.write("Score:", st.session_state.score)
